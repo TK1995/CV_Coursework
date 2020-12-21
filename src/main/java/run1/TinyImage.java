@@ -4,6 +4,7 @@ import org.openimaj.feature.FeatureExtractor;
 import org.openimaj.feature.FloatFV;
 import org.openimaj.image.FImage;
 import org.openimaj.image.processing.resize.ResizeProcessor;
+import org.openimaj.util.array.ArrayUtils;
 
 public class TinyImage implements FeatureExtractor<FloatFV, FImage> {
 
@@ -61,13 +62,7 @@ public class TinyImage implements FeatureExtractor<FloatFV, FImage> {
 		}
 		
 		// pack the image pixels into a vector
-		float[] fv = new float[16*16];
-		
-		for(int i=0; i<16; i++) {
-			for(int j=0; j<16; j++) {
-				fv[i*16+j] = tinyPixels[i][j];
-			}
-		}
+		float[] fv = ArrayUtils.reshape(tinyPixels);
 		
 		FloatFV floatFV = new FloatFV(fv);
 
