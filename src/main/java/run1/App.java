@@ -44,7 +44,7 @@ public class App {
 					+ knn.classify(testScenes.get(i)).getPredictedClasses().iterator().next();
 			pw.println(str);
 		}
-		
+
 		// close the stream
 		pw.close();
 
@@ -55,9 +55,9 @@ public class App {
 			for (FImage testImg : entry.getValue()) {
 				String result = knn.classify(testImg).getPredictedClasses().iterator().next();
 				if (result.equals(entry.getKey())) {
-					correct ++;
+					correct++;
 				} else
-					incorrect ++;
+					incorrect++;
 			}
 		}
 		float accuracy = correct / (correct + incorrect) * 100;
