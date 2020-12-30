@@ -15,12 +15,12 @@ import org.openimaj.image.FImage;
 import org.openimaj.image.ImageUtilities;
 import org.openimaj.ml.annotation.basic.KNNAnnotator;
 
-public class App {
+public class Run1 {
 	public static void main(String[] args) throws IOException {
 
 		VFSGroupDataset<FImage> trainScenes = new VFSGroupDataset<FImage>("/Users/maggie/Desktop/data/training",
 				ImageUtilities.FIMAGE_READER);
-		GroupedRandomSplitter<String, FImage> splits = new GroupedRandomSplitter<>(trainScenes, 70, 0, 30);
+		GroupedRandomSplitter<String, FImage> splits = new GroupedRandomSplitter<>(trainScenes, 75, 0, 25);
 
 		TinyImage featureExtractor = new TinyImage();
 

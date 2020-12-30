@@ -44,7 +44,7 @@ public class TinyImage implements FeatureExtractor<FloatFV, FImage> {
 			}
 		}
 		
-		// normalise the numbers in pixels
+		// normalise the pixels numbers and make it unit length
 		float mean = sum / (16 * 16);
 		float sd = 0;
 		
@@ -61,7 +61,7 @@ public class TinyImage implements FeatureExtractor<FloatFV, FImage> {
 			}
 		}
 		
-		// pack the image pixels into a vector
+		// pack the image pixels into a vector and return the feature vector.
 		float[] fv = ArrayUtils.reshape(tinyPixels);
 		
 		FloatFV floatFV = new FloatFV(fv);

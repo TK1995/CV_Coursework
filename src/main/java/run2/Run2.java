@@ -36,7 +36,7 @@ import org.openimaj.util.pair.IntFloatPair;
 
 import de.bwaldvogel.liblinear.SolverType;
 
-public class App {
+public class Run2 {
 
 	public static int patchSize = 8;
 	public static int step = 4;
@@ -104,7 +104,7 @@ public class App {
 	}
 
 	// use LocalFeature class can easily obtain the feature vectors and their
-	// locatiosn.
+	// location.
 	public static List<LocalFeature<SpatialLocation, FloatFV>> extractor(FImage image, int patchSize, int step) {
 
 		List<LocalFeature<SpatialLocation, FloatFV>> result = new ArrayList<LocalFeature<SpatialLocation, FloatFV>>();
@@ -160,7 +160,7 @@ public class App {
 		VFSListDataset<FImage> testScenes = new VFSListDataset<>("/Users/tangke/Desktop/data/testing",
 				ImageUtilities.FIMAGE_READER);
 
-		App app = new App();
+		Run2 app = new Run2();
 		app.train(trainScenes);
 
 		System.out.println("Start to classify test set.");
