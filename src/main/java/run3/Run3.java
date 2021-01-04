@@ -1,6 +1,8 @@
 package run3;
 
+import java.io.IOException;
 import java.io.FileNotFoundException;
+
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,67 +54,49 @@ public class Run3 {
 	GroupedRandomSplitter<String, Record> splits;
 	GroupedDataset<String, ListDataset<Record>, Record> test;
 	
-	public static void main(String args[]) throws FileSystemException {
+	public static void main(String args[]) throws FileSystemException, IOException {
 		Run3 run = new Run3();
 		run.loadData();
 		run.training();
-		try {
-			run.testing();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (FileSystemException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
+		
+		try { run.testing(); } 
+		catch (FileNotFoundException e) { e.printStackTrace(); } 
+		catch (FileSystemException e)   { e.printStackTrace(); }
 	}
 
-	// load the training and testing data set.
+	// Load the training and testing data sets
 	public void loadData() throws FileSystemException {
-		//this.trainingSet = new VFSGroupDataset<FImage>("/Users/tangke/Desktop/data/training",
-		//		ImageUtilities.FIMAGE_READER);
-		
-		
-		//this.testingSet = new VFSListDataset<FImage>("/Users/tangke/Desktop/data/testing",
-		//		ImageUtilities.FIMAGE_READER);
-		trainingSet = new VFSGroupDataset<FImage>("/Users/tangke/Desktop/data/training",
-				ImageUtilities.FIMAGE_READER);
+		//this.trainingSet = new VFSGroupDataset<FImage>("/Users/tangke/Desktop/data/training", ImageUtilities.FIMAGE_READER);
+		//this.testingSet = new VFSListDataset<FImage>("/Users/tangke/Desktop/data/testing", ImageUtilities.FIMAGE_READER);
+		trainingSet = new VFSGroupDataset<FImage>("/Users/tangke/Desktop/data/training", ImageUtilities.FIMAGE_READER);
 		//splits = new GroupedRandomSplitter<>(trainingSet, 70, 0, 30);
-		
 	}
 
-	// Convert dataset from VFSGroupDataset to MapBackedDataset since the later one
-	// has more functions
-	public static MapBackedDataset<String, ListDataset<Record>, Record> convertDataset(VFSGroupDataset<FImage> dataset)
-			throws FileSystemException {
+	// Convert dataset from VFSGroupDataset to MapBackedDataset (which supports more functionality)
+	public static MapBackedDataset<String, ListDataset<Record>, Record> convertDataset(VFSGroupDataset<FImage> dataset) throws FileSystemException {
 		MapBackedDataset<String, ListDataset<Record>, Record> resultDataset = new MapBackedDataset<String, ListDataset<Record>, Record>();
 
 		for (String cat : dataset.getGroups()) {
 			ListDataset<FImage> imageSet = dataset.get(cat);
 			FileObject[] fileObject = dataset.getFileObject(cat).getChildren();
 			int catSize = imageSet.size();
-			// create a new list which contains Records;
-			ListDataset<Record> recordSet = new ListBackedDataset<Record>();
+			ListDataset<Record> recordSet = new ListBackedDataset<Record>(); // create a new list containing records
 
 			for (int i = 0; i < catSize; i++) {
 				Record newRecord = new Record(fileObject[i].getName().getBaseName(), imageSet.get(i));
 				recordSet.add(newRecord);
 			}
-
 			resultDataset.put(cat, recordSet);
 		}
 
 		return resultDataset;
-
 	}
 	
 	public void training() throws FileSystemException {
 		
-		// dsft with step size and bin size. 
+		// dsft with step size and bin size:
 		DenseSIFT dsft = new DenseSIFT(5, 7);
 		PyramidDenseSIFT<FImage> pdsift = new PyramidDenseSIFT<FImage>(dsft, 6f, 7);
-		
 		MapBackedDataset<String, ListDataset<Record>, Record> trainSet = convertDataset(trainingSet);
 		Dataset<Record> sampleSet = GroupedUniformRandomisedSampler.sample(trainSet, 30);
 		
@@ -131,25 +115,24 @@ public class Run3 {
 		//Start training the classifier
 		ann.train(splits.getTrainingDataset());
 		System.out.println("Train Finished.");
-		
-		
 	}
 	
-	public void testing() throws FileNotFoundException, FileSystemException {
+	public void testing() throws FileNotFoundException, FileSystemException, IOException {
 		System.out.println("Start to classify test set.");
-		//FileObject[] fileObject = testingSet.getFileObjects()[0].getChildren();
-		//FileObject[] fileObject = testingSet.getFileObjects();
 		
-		//PrintWriter pw = new PrintWriter("run3.txt");
-		//String str;
-		//for (int i = 0; i < testingSet.size(); i++) {
-		//	Record record = new Record(fileObject[i].getName().getBaseName(), testingSet.get(i));
-		//	str = fileObject[i].getName().getBaseName() + " "
-		//			+ ann.classify(record).getPredictedClasses().iterator().next();
-		//	pw.println(str);
-		//}
-
-		//pw.close();
+		/*
+		FileObject[] fileObject = testingSet.getFileObjects()[0].getChildren();
+		FileObject[] fileObject = testingSet.getFileObjects();
+		
+		PrintWriter pw = new PrintWriter("run3.txt");
+		String str;
+		for (int i = 0; i < testingSet.size(); i++) {
+			Record record = new Record(fileObject[i].getName().getBaseName(), testingSet.get(i));
+			str = fileObject[i].getName().getBaseName() + " " + ann.classify(record).getPredictedClasses().iterator().next();
+			pw.println(str);
+		}
+		pw.close();
+		*/
 		
 		float correct = 0;
 		float incorrect = 0;
@@ -165,10 +148,13 @@ public class Run3 {
 		float accuracy = correct / (correct + incorrect) * 100;
 
 		System.out.println("Accuracy: " + accuracy);
+		
+		// sort output file lines in numerical order
+		FileSorter fs = new FileSorter();
+		fs.sortFile("run3.txt");
 	}
 
-	// write HardAssigner based on SIFT features to perform K-means clustering
-	// Inspired by OnpenImaj tutorial 12
+	// HardAssigner based on SIFT features to perform k-means clustering (inspired by OnpenIMAJ Tutorial 12)
 	static HardAssigner<byte[], float[], IntFloatPair> trainQuantiser(Dataset<Record> sampleSet, PyramidDenseSIFT<FImage> pdsift) {
 		// Create the LocalFeatureList of ByteDSIFTKeypoint
 		List<LocalFeatureList<ByteDSIFTKeypoint>> allKeys = new ArrayList<LocalFeatureList<ByteDSIFTKeypoint>>();
@@ -176,22 +162,18 @@ public class Run3 {
 		for (Record record : sampleSet) {
 			FImage image = (FImage) record.getImage();
 			pdsift.analyseImage(image);
-			// set the threadshold of the DSIFT features
-			allKeys.add(pdsift.getByteKeypoints(0.005f));
+			allKeys.add(pdsift.getByteKeypoints(0.005f)); // set the threadshold of the DSIFT features
 		}
 
-		// Start to compute k-means clustering
+		// Begin to compute k-means clustering
 		ByteKMeans km = ByteKMeans.createKDTreeEnsemble(150);
 		DataSource<byte[]> datasource = new LocalFeatureListDataSource<ByteDSIFTKeypoint, byte[]>(allKeys);
-
 		ByteCentroidsResult result = km.cluster(datasource);
+		
 		return result.defaultHardAssigner();
-
 	}
 	
-
-	
-	// write a extractor to extract features from given data
+	// Extractor to extract features from given data
 	static class Extractor implements FeatureExtractor<DoubleFV, Record> {
 		PyramidDenseSIFT<FImage> pdsift;
 		HardAssigner<byte[], float[], IntFloatPair> assigner;
@@ -204,15 +186,11 @@ public class Run3 {
 		@Override
 		public DoubleFV extractFeature(Record object) {
 			FImage image = (FImage) object.getImage();
-
 			pdsift.analyseImage(image);
-
 			BagOfVisualWords<byte[]> bovw = new BagOfVisualWords<byte[]>(assigner);
-			BlockSpatialAggregator<byte[], SparseIntFV> spatial = new BlockSpatialAggregator<byte[], SparseIntFV>(bovw,
-					2, 2);
+			BlockSpatialAggregator<byte[], SparseIntFV> spatial = new BlockSpatialAggregator<byte[], SparseIntFV>(bovw, 2, 2);
+			
 			return spatial.aggregate(pdsift.getByteKeypoints(0.015f), image.getBounds()).normaliseFV();
 		}
-
 	}
-
 }

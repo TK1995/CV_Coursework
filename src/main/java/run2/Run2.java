@@ -1,6 +1,8 @@
 package run2;
 
+import java.io.IOException;
 import java.io.FileNotFoundException;
+
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,20 +54,17 @@ public class Run2 {
 		FeatureExtractor<DoubleFV, FImage> extractor = new BOVWExtractor(assigner, patchSize, step);
 		System.out.println("Features Extration Completed.");
 
-		ann = new LiblinearAnnotator<FImage, String>(extractor, Mode.MULTICLASS, SolverType.L2R_L2LOSS_SVC, 1.0,
-				0.00001);
+		ann = new LiblinearAnnotator<FImage, String>(extractor, Mode.MULTICLASS, SolverType.L2R_L2LOSS_SVC, 1.0, 0.00001);
 		ann.train(trainSet);
 		System.out.println("Training Finished.");
 	}
 
 	public ClassificationResult<String> classify(FImage image) {
-
 		return ann.classify(image);
 	}
 
 	/*
-	 * Build a HardAssigner based on k-means It will be run on the patches sampled
-	 * from image datasets
+	 * Build a HardAssigner based on k-means, to be run on the patches sampled from image datasets
 	 */
 	static HardAssigner<float[], float[], IntFloatPair> trainQuantiser(Dataset<FImage> trainSet) {
 
@@ -73,7 +72,7 @@ public class Run2 {
 		List<float[]> vocabulary = new ArrayList<>();
 
 		for (FImage image : trainSet) {
-			// first get the feature vectors of all images
+			// Get the feature vectors of all images
 			// System.out.println("img.................");
 			List<LocalFeature<SpatialLocation, FloatFV>> fvs = extractor(image, patchSize, step);
 			// System.out.println("fvs.................");
@@ -87,31 +86,28 @@ public class Run2 {
 			Collections.shuffle(vocabulary);
 			vocabulary = vocabulary.subList(0, 100000);
 		}
-
 		System.out.println("Sample size is: " + vocabulary.size());
 
 		float[][] data = new float[vocabulary.size()][];
-		for (int i = 0; i < vocabulary.size(); i++)
+		for (int i = 0; i < vocabulary.size(); i++) {
 			data[i] = vocabulary.get(i);
+		}
 		System.out.println("One vector size is: " + data.length);
 
 		System.out.println("----------------Start clustering!------------------");
 		FloatKMeans km = FloatKMeans.createKDTreeEnsemble(300);
-		// DataSource<float[]> datasource = new
-		// LocalFeatureListDataSource<>(vocabulary);
+		// DataSource<float[]> datasource = new LocalFeatureListDataSource<>(vocabulary);
 		FloatCentroidsResult output = km.cluster(data);
 		System.out.println("assigner finished.................");
 		return output.defaultHardAssigner();
-
 	}
 
-	// use LocalFeature class can easily obtain the feature vectors and their
-	// location.
+	// Conveniently obtain the feature vectors and their location, using the LocalFeature class
 	public static List<LocalFeature<SpatialLocation, FloatFV>> extractor(FImage image, int patchSize, int step) {
 
 		List<LocalFeature<SpatialLocation, FloatFV>> result = new ArrayList<LocalFeature<SpatialLocation, FloatFV>>();
 
-		// A easy way to create sliding window over an image, get all positions
+		// A simple mechanism to create a sliding window over an image, retrieving all positions:
 		RectangleSampler sampler = new RectangleSampler(image, step, step, patchSize, patchSize);
 		List<Rectangle> allPositions = sampler.allRectangles();
 
@@ -128,9 +124,7 @@ public class Run2 {
 					new SpatialLocation(p.x, p.y), featureVector);
 			result.add(x);
 		}
-
 		return result;
-
 	}
 
 	class BOVWExtractor implements FeatureExtractor<DoubleFV, FImage> {
@@ -147,20 +141,15 @@ public class Run2 {
 		@Override
 		public DoubleFV extractFeature(FImage object) {
 			BagOfVisualWords<float[]> bovw = new BagOfVisualWords<float[]>(assigner);
-			BlockSpatialAggregator<float[], SparseIntFV> spatial = new BlockSpatialAggregator<float[], SparseIntFV>(
-					bovw, 2, 2);
-
+			BlockSpatialAggregator<float[], SparseIntFV> spatial = new BlockSpatialAggregator<float[], SparseIntFV>(bovw, 2, 2);
 			return spatial.aggregate(extractor(object, patchSize, step), object.getBounds()).normaliseFV();
 		}
 	}
 
-	public static void main(String[] args) throws FileSystemException, FileNotFoundException {
+	public static void main(String[] args) throws FileSystemException, FileNotFoundException, IOException {
 
-		VFSGroupDataset<FImage> trainScenes = new VFSGroupDataset<FImage>("/Users/tangke/Desktop/data/training",
-				ImageUtilities.FIMAGE_READER);
-
-		VFSListDataset<FImage> testScenes = new VFSListDataset<>("/Users/tangke/Desktop/data/testing",
-				ImageUtilities.FIMAGE_READER);
+		VFSGroupDataset<FImage> trainScenes = new VFSGroupDataset<FImage>("/Users/tangke/Desktop/data/training",ImageUtilities.FIMAGE_READER);
+		VFSListDataset<FImage> testScenes = new VFSListDataset<>("/Users/tangke/Desktop/data/testing",ImageUtilities.FIMAGE_READER);
 
 		Run2 app = new Run2();
 		app.train(trainScenes);
@@ -175,7 +164,6 @@ public class Run2 {
 					+ app.classify(testScenes.get(i)).getPredictedClasses().iterator().next();
 			pw.println(str);
 		}
-
 		pw.close();
 		
 		// sort output file lines in numerical order
