@@ -36,6 +36,8 @@ import org.openimaj.util.pair.IntFloatPair;
 
 import de.bwaldvogel.liblinear.SolverType;
 
+import FileSorter.FileSorter;
+
 public class Run2 {
 
 	public static int patchSize = 8;
@@ -175,6 +177,9 @@ public class Run2 {
 		}
 
 		pw.close();
+		
+		// sort output file lines in numerical order
+		FileSorter fs = new FileSorter();
+		fs.sortFile("run2.txt");
 	}
-
 }

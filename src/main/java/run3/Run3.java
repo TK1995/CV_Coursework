@@ -41,6 +41,8 @@ import org.openimaj.ml.kernel.HomogeneousKernelMap.KernelType;
 import org.openimaj.ml.kernel.HomogeneousKernelMap.WindowType;
 import org.openimaj.util.pair.IntFloatPair;
 
+import FileSorter.FileSorter;
+
 public class Run3 {
 
 	private VFSGroupDataset<FImage> trainingSet;

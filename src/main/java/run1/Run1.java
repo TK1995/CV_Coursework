@@ -15,6 +15,8 @@ import org.openimaj.image.FImage;
 import org.openimaj.image.ImageUtilities;
 import org.openimaj.ml.annotation.basic.KNNAnnotator;
 
+import FileSorter.FileSorter;
+
 public class Run1 {
 	public static void main(String[] args) throws IOException {
 
@@ -63,6 +65,9 @@ public class Run1 {
 		float accuracy = correct / (correct + incorrect) * 100;
 
 		System.out.println("Accuracy: " + accuracy);
+		
+		// sort output file lines in numerical order
+		FileSorter fs = new FileSorter();
+		fs.sortFile("run1.txt");
 	}
-
 }

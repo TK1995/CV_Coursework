@@ -45,6 +45,7 @@ import org.openimaj.ml.kernel.HomogeneousKernelMap.KernelType;
 import org.openimaj.ml.kernel.HomogeneousKernelMap.WindowType;
 import org.openimaj.util.pair.IntFloatPair;
 
+import FileSorter.FileSorter;
 
 public class Run4 {
 	
@@ -153,6 +154,10 @@ public class Run4 {
 		}
 		
 		System.out.println("Finished outputting to file!");
+		
+		// sort output file lines in numerical order
+		FileSorter fs = new FileSorter();
+		fs.sortFile(filename);
 	}
 	
 	//Method for testing the classifier's performance, will take a sample of training images and attempt to classify them.
